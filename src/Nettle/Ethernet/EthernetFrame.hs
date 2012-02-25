@@ -14,6 +14,7 @@ module Nettle.Ethernet.EthernetFrame (
   , ethTypeIP
   , ethTypeARP
   , ethTypeLLDP
+  , ethTypeIPv6
   , typeEth2Cutoff
   , VLANPriority
   , VLANID
@@ -162,10 +163,12 @@ getEthernetFrame = do
          then do mArpPacket <- getARPPacket
                  case mArpPacket of
                    Just arpPacket -> return $ hCons hdr (hCons (ARPInEthernet arpPacket) hNil)
-                   Nothing -> error "unknown ethernet frame"
+                   Nothing -> error "unknown ethernet frame1"
 --                     do body <- Strict.getByteString r
 --                        return $ hCons hdr (hCons (UninterpretedEthernetBody B.empty) hNil)  
-         else error "unknown ethernet frame" 
+         else if typeCode hdr == ethTypeIPv6
+			then error "aww man, IPv6 trafic"
+			else error "unknown ethernet frame2" 
               --do body <- Strict.getByteString r
               --   return $ hCons hdr (hCons (UninterpretedEthernetBody B.empty) hNil)  
 {-# INLINE getEthernetFrame #-}
@@ -250,11 +253,12 @@ putEthFrame (HCons hdr (HCons body HNil)) =
        UninterpretedEthernetBody bs -> Strict.putByteString bs
 
 
-ethTypeIP, ethTypeARP, ethTypeLLDP, ethTypeVLAN, typeEth2Cutoff :: EthernetTypeCode
+ethTypeIP, ethTypeARP, ethTypeLLDP, ethTypeVLAN, ethTypeIPv6, typeEth2Cutoff :: EthernetTypeCode
 ethTypeIP           = 0x0800
 ethTypeARP          = 0x0806
 ethTypeLLDP         = 0x88CC
 ethTypeVLAN         = 0x8100
+ethTypeIPv6			= 0x86DD
 typeEth2Cutoff = 0x0600
 
 
