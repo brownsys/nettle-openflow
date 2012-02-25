@@ -185,11 +185,11 @@ getIPPacket = do
               | ipProtocol == ipTypeTcp  = {-# SCC "getIPPacket3" #-} getTCPHeader  >>= return . (\tcpHdr -> hCons hdr (hCons (TCPInIP tcpHdr) hNil))
               | ipProtocol == ipTypeUdp  = {-# SCC "getIPPacket4" #-} 
                                            do udpHdr <- getUDPHeader  
-                                              body <- getByteString (fromIntegral (totalLength - (4 * headerLength)) - 4)
+                                              body <- getByteString (fromIntegral ((min 114 totalLength) - (4 * headerLength)) - 4)
                                               return (hCons hdr (hCons (UDPInIP udpHdr body) hNil))
               | ipProtocol == ipTypeIcmp = {-# SCC "getIPPacket5" #-} getICMPHeader >>= return . (\icmpHdr -> hCons hdr (hCons (ICMPInIP icmpHdr) hNil))
               | otherwise                = {-# SCC "getIPPacket6" #-} 
-                                             getByteString (fromIntegral (totalLength - (4 * headerLength))) >>= 
+                                             getByteString (fromIntegral ((min 114 totalLength) - (4 * headerLength))) >>= 
                                              return . (\bs -> hCons hdr (hCons (UninterpretedIPBody (B.fromChunks [bs])) hNil))
 {-# INLINE getIPPacket #-}
           
