@@ -1108,6 +1108,13 @@ putCSMessage (xid, msg) =
             putWord16be p
             putWord32be 0 >> putWord16be 0
             mapM_ putQueueConfig qCfgs
+          M.ExtQueueDelete p qCfgs -> do
+            putH ofptVendor (headerSize + 16 + sum(map lenQueueConfig qCfgs))
+            putWord32be 0x000026e1 -- OPENFLOW_VENDOR_ID
+            putWord32be 1 -- OFP_EXT_QUEUE_DELETE
+            putWord16be p
+            putWord32be 0 >> putWord16be 0
+            mapM_ putQueueConfig qCfgs
           M.Vendor bytes -> do 
             putH ofptVendor  (headerSize + BS.length bytes)
             putByteString bytes
