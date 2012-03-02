@@ -53,6 +53,7 @@ data CSMessage
     | BarrierRequest  -- ^ Controller requests a barrier
     | SetConfig
     | ExtQueueModify !Port.PortID ![QueueConfig]
+    | ExtQueueDelete !Port.PortID ![QueueConfig]
     | Vendor ByteString
     | GetQueueConfig !QueueConfigRequest
       deriving (Show,Eq)
