@@ -163,12 +163,12 @@ getEthernetFrame = do
          then do mArpPacket <- getARPPacket
                  case mArpPacket of
                    Just arpPacket -> return $ hCons hdr (hCons (ARPInEthernet arpPacket) hNil)
-                   Nothing -> error "unknown ethernet frame1"
+                   Nothing -> error "cannot decode arp packet"
 --                     do body <- Strict.getByteString r
 --                        return $ hCons hdr (hCons (UninterpretedEthernetBody B.empty) hNil)  
          else if typeCode hdr == ethTypeIPv6
-			then error "aww man, IPv6 trafic"
-			else error "unknown ethernet frame2" 
+			then error "IPv6 traffic"
+			else error $ "unknown ethernet type code: " ++ show (typeCode hdr)
               --do body <- Strict.getByteString r
               --   return $ hCons hdr (hCons (UninterpretedEthernetBody B.empty) hNil)  
 {-# INLINE getEthernetFrame #-}
