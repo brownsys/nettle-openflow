@@ -21,10 +21,11 @@ import Nettle.IPv4.IPAddress hiding (intersect)
 import qualified Nettle.IPv4.IPAddress as IPAddress
 import qualified Nettle.IPv4.IPPacket as IP
 import Nettle.OpenFlow.Port
-import Data.Maybe (isJust)
+import Data.Maybe (isJust, catMaybes)
 import Control.Monad.Error
 import Data.HList 
 import qualified Data.Binary.Strict.Get as Strict
+import qualified Data.List as List
 
 -- | Each flow entry includes a match, which essentially defines 
 -- packet-matching condition. Fields that are left Nothing are "wildcards".
@@ -38,7 +39,27 @@ data Match = Match {
   matchIPProtocol                    :: !(Maybe IP.IPProtocol), 
   srcIPAddress, dstIPAddress         :: !IPAddressPrefix,
   srcTransportPort, dstTransportPort :: !(Maybe IP.TransportPort) 
-} deriving (Show,Read,Eq,Ord)
+} deriving (Read,Eq,Ord)
+
+instance Show Match where
+  show (Match ip seth deth vid vpr etht tos prot sip dip stp dtp) = 
+    let mshow _ Nothing = Nothing
+        mshow prefix (Just v) = Just (prefix ++ show v)
+        mshowIP _ (_, 0) = Nothing
+        mshowIP prefix ipPref = Just (prefix ++ IPAddress.showPrefix ipPref)
+        lst = [ mshow "inPort=" ip, 
+                mshow "srcEth=" seth,
+                mshow "dstEth=" deth, 
+                mshow "vid=" vid, 
+                mshow "vpr=" vpr, 
+                mshow "ethtyp=" etht,
+                mshow "tos=" tos,
+                mshow "prot=" prot,
+                mshowIP "sip=" sip,
+                mshowIP "dip=" dip,
+                mshow "stp=" stp,
+                mshow "dtp=" dtp ]
+      in "<" ++ List.concat (List.intersperse "," (catMaybes lst)) ++ ">"
 
 -- |A match that matches every packet.
 matchAny :: Match
@@ -84,7 +105,7 @@ subset (Match inp seth deth vid vp etp tos pr sh dh sp dp)
   let inm (Just l) (Just r) = l == r
       inm Nothing  (Just _) = False
       inm _        Nothing  = True
-      ip p1 p2 = IPAddress.isSubset p1 p2
+      ip p1 p2 = IPAddress.isSubset p2 p1
     in inm inp inp' && inm seth seth' && inm deth deth' && inm vid vid' &&
        inm vp vp' && inm etp etp' && inm tos tos' && inm pr pr' && ip sh sh' &&
        ip dh dh' && inm sp sp' && inm dp dp'
