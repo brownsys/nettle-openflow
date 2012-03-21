@@ -35,7 +35,7 @@ data Match = Match {
   matchIPProtocol                    :: !(Maybe IP.IPProtocol), 
   srcIPAddress, dstIPAddress         :: !IPAddressPrefix,
   srcTransportPort, dstTransportPort :: !(Maybe IP.TransportPort) 
-} deriving (Show,Read,Eq)
+} deriving (Show,Read,Eq,Ord)
 
 
 -- |A match that matches every packet.
