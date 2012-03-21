@@ -23,18 +23,19 @@ import Control.Monad.Error
 import Data.HList 
 import qualified Data.Binary.Strict.Get as Strict
 
--- | Each flow entry includes a match, which essentially defines packet-matching condition. 
--- Fields that are left Nothing are "wildcards".
-data Match = Match { inPort                             :: !(Maybe PortID), 
-                     srcEthAddress, dstEthAddress       :: !(Maybe EthernetAddress), 
-                     vLANID                             :: !(Maybe VLANID), 
-                     vLANPriority                       :: !(Maybe VLANPriority), 
-                     ethFrameType                       :: !(Maybe EthernetTypeCode),
-                     ipTypeOfService                    :: !(Maybe IP.IPTypeOfService), 
-                     matchIPProtocol                    :: !(Maybe IP.IPProtocol), 
-                     srcIPAddress, dstIPAddress         :: !IPAddressPrefix,
-                     srcTransportPort, dstTransportPort :: !(Maybe IP.TransportPort) }
-             deriving (Show,Read,Eq)
+-- | Each flow entry includes a match, which essentially defines 
+-- packet-matching condition. Fields that are left Nothing are "wildcards".
+data Match = Match { 
+  inPort                             :: !(Maybe PortID), 
+  srcEthAddress, dstEthAddress       :: !(Maybe EthernetAddress), 
+  vLANID                             :: !(Maybe VLANID), 
+  vLANPriority                       :: !(Maybe VLANPriority), 
+  ethFrameType                       :: !(Maybe EthernetTypeCode),
+  ipTypeOfService                    :: !(Maybe IP.IPTypeOfService), 
+  matchIPProtocol                    :: !(Maybe IP.IPProtocol), 
+  srcIPAddress, dstIPAddress         :: !IPAddressPrefix,
+  srcTransportPort, dstTransportPort :: !(Maybe IP.TransportPort) 
+} deriving (Show,Read,Eq)
 
 
 -- |A match that matches every packet.
