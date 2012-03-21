@@ -11,6 +11,7 @@ module Nettle.OpenFlow.Match (
   , ofpVlanNone
   , matches
   , intersect
+  , subset
   ) where
 
 import Nettle.Ethernet.EthernetAddress
@@ -76,6 +77,17 @@ intersect (Match inp seth deth vid vp etp tos pr sh dh sp dp)
   dstPort <- inter dp dp'
   return (Match inPort srcEth dstEth vlanID vlanPrio ethTyp ipTOS ipProto
                 srcIP dstIP srcPort dstPort)
+
+subset :: Match -> Match -> Bool
+subset (Match inp seth deth vid vp etp tos pr sh dh sp dp)
+       (Match inp' seth' deth' vid' vp' etp' tos' pr' sh' dh' sp' dp') =
+  let inm (Just l) (Just r) = l == r
+      inm Nothing  (Just _) = False
+      inm _        Nothing  = True
+      ip p1 p2 = IPAddress.isSubset p1 p2
+    in inm inp inp' && inm seth seth' && inm deth deth' && inm vid vid' &&
+       inm vp vp' && inm etp etp' && inm tos tos' && inm pr pr' && ip sh sh' &&
+       ip dh dh' && inm sp sp' && inm dp dp'
 
 -- | Return True if given 'Match' represents an exact match, i.e. no
 --   wildcards and the IP addresses' prefixes cover all bits.
