@@ -19,7 +19,7 @@ module Nettle.OpenFlow (
 import Nettle.OpenFlow.Action
 import Nettle.OpenFlow.Error
 import Nettle.OpenFlow.FlowTable
-import Nettle.OpenFlow.Match
+import Nettle.OpenFlow.Match hiding (intersect)
 import Nettle.OpenFlow.Messages
 import Nettle.OpenFlow.MessagesBinary
 import Nettle.OpenFlow.Packet

@@ -10,12 +10,14 @@ module Nettle.OpenFlow.Match (
   , frameToExactMatchNoPort
   , ofpVlanNone
   , matches
+  , intersect
   ) where
 
 import Nettle.Ethernet.EthernetAddress
 import Nettle.Ethernet.EthernetFrame 
 import Nettle.Ethernet.AddressResolutionProtocol
-import Nettle.IPv4.IPAddress
+import Nettle.IPv4.IPAddress hiding (intersect)
+import qualified Nettle.IPv4.IPAddress as IPAddress
 import qualified Nettle.IPv4.IPPacket as IP
 import Nettle.OpenFlow.Port
 import Data.Maybe (isJust)
@@ -37,7 +39,6 @@ data Match = Match {
   srcTransportPort, dstTransportPort :: !(Maybe IP.TransportPort) 
 } deriving (Show,Read,Eq,Ord)
 
-
 -- |A match that matches every packet.
 matchAny :: Match
 matchAny = Match { inPort           = Nothing, 
@@ -52,6 +53,29 @@ matchAny = Match { inPort           = Nothing,
                    dstIPAddress     = defaultIPPrefix, 
                    srcTransportPort = Nothing, 
                    dstTransportPort = Nothing }
+
+intersect :: Match -> Match -> Maybe Match
+intersect (Match inp seth deth vid vp etp tos pr sh dh sp dp)
+          (Match inp' seth' deth' vid' vp' etp' tos' pr' sh' dh' sp' dp') = do
+  let inter lhs      Nothing  = Just lhs
+      inter Nothing  rhs      = Just rhs
+      inter (Just l) (Just r) 
+        | l == r    = Just (Just l)
+        | otherwise = Nothing
+  inPort <- inter inp inp'
+  srcEth <- inter seth seth'
+  dstEth <- inter deth deth'
+  vlanID <- inter vid vid'
+  vlanPrio <- inter vp vp'
+  ethTyp <- inter etp etp'
+  ipTOS <- inter tos tos'
+  ipProto <- inter pr pr'
+  srcIP <- IPAddress.intersect sh sh'
+  dstIP <- IPAddress.intersect dh dh'
+  srcPort <- inter sp sp'
+  dstPort <- inter dp dp'
+  return (Match inPort srcEth dstEth vlanID vlanPrio ethTyp ipTOS ipProto
+                srcIP dstIP srcPort dstPort)
 
 -- | Return True if given 'Match' represents an exact match, i.e. no
 --   wildcards and the IP addresses' prefixes cover all bits.
