@@ -77,7 +77,7 @@ data PseudoPort = PhysicalPort PortID                 -- ^send out physical port
                 | ToController MaxLenToSendController -- ^send to controller
                 | NormalSwitching                     -- ^process with normal L2/L3 switching
                 | WithTable                           -- ^process packet with flow table
-                  deriving (Show,Read, Eq)
+                  deriving (Show,Read, Eq, Ord)
 
 -- | A send to controller action includes the maximum
 -- number of bytes that a switch will send to the 
