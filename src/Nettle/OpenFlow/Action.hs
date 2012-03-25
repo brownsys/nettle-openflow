@@ -65,7 +65,7 @@ data Action
         queueID     :: QueueID       -- ^where to enqueue the packets
       } -- ^output to queue
     | VendorAction VendorID [Word8] 
-    deriving (Show,Eq)
+    deriving (Show,Eq,Ord)
            
 
 -- | A @PseudoPort@ denotes the target of a forwarding

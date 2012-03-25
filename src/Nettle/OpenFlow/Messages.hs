@@ -56,4 +56,20 @@ data CSMessage
     | ExtQueueDelete !Port.PortID ![QueueConfig]
     | Vendor ByteString
     | GetQueueConfig !QueueConfigRequest
-      deriving (Show,Eq)
+      deriving (Eq)
+
+instance Show CSMessage where
+  show CSHello = "Hello"
+  show (CSEchoRequest _) = "EchoRequest"
+  show (CSEchoReply _) = "EchoReply"
+  show FeaturesRequest = "FeaturesRequest"
+  show (PacketOut po) = show po
+  show (FlowMod fm) = show fm
+  show (PortMod pm) = show pm
+  show (StatsRequest r) = show r
+  show BarrierRequest = "BarrierRequest"
+  show SetConfig = "SetConfig"
+  show (ExtQueueModify p q) = "QueueModify " ++ show p ++ " " ++ show q
+  show (ExtQueueDelete p q) = "QueueDelete " ++ show p ++ " " ++ show q
+  show (Vendor _) = show "Vendor _"
+  show (GetQueueConfig cfg) = show cfg

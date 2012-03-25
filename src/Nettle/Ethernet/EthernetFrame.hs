@@ -15,6 +15,7 @@ module Nettle.Ethernet.EthernetFrame (
   , ethTypeARP
   , ethTypeLLDP
   , ethTypeIPv6
+  , ethTypePaneDP
   , typeEth2Cutoff
   , VLANPriority
   , VLANID
@@ -27,7 +28,6 @@ module Nettle.Ethernet.EthernetFrame (
     -- * Parsers and unparsers 
   , getEthernetFrame
   , getEthHeader
-  , getEthernetFrame2
   , getEthHeader2
   , putEthHeader
   , putEthFrame
@@ -61,6 +61,7 @@ type EthernetFrame = EthernetHeader :*: EthernetBody :*: HNil
 
 data EthernetBody  = IPInEthernet !IPPacket
                    | ARPInEthernet !ARPPacket
+                   | PaneDPInEthernet Word64 Word16
                    | UninterpretedEthernetBody !B.ByteString
                    deriving (Show,Eq)
 
@@ -156,41 +157,22 @@ getEthernetFrame :: Strict.Get EthernetFrame
 getEthernetFrame = do 
   hdr <- {-# SCC "getEthHeader" #-} getEthHeader
   -- r <- Strict.remaining
-  if typeCode hdr == ethTypeIP
-    then do ipPacket <- getIPPacket
-            return $ hCons hdr (hCons (IPInEthernet ipPacket) hNil)            
-    else if typeCode hdr == ethTypeARP
-         then do mArpPacket <- getARPPacket
-                 case mArpPacket of
-                   Just arpPacket -> return $ hCons hdr (hCons (ARPInEthernet arpPacket) hNil)
-                   Nothing -> error "cannot decode arp packet"
---                     do body <- Strict.getByteString r
---                        return $ hCons hdr (hCons (UninterpretedEthernetBody B.empty) hNil)  
-         else if typeCode hdr == ethTypeIPv6
-			then error "IPv6 traffic"
-			else error $ "unknown ethernet type code: " ++ show (typeCode hdr)
-              --do body <- Strict.getByteString r
-              --   return $ hCons hdr (hCons (UninterpretedEthernetBody B.empty) hNil)  
-{-# INLINE getEthernetFrame #-}
-
-getEthernetFrame2 :: Int -> Binary.Get EthernetFrame
-getEthernetFrame2 total = do 
-  hdr <- getEthHeader2
-  soFar <- Binary.bytesRead 
-  let r = total - fromIntegral soFar 
-  if typeCode hdr == ethTypeIP
-    then do ipPacket <- getIPPacket2
-            return $ hCons hdr (hCons (IPInEthernet ipPacket) hNil)            
-    else if typeCode hdr == ethTypeARP
-         then do mArpPacket <- getARPPacket2
-                 case mArpPacket of
-                   Just arpPacket -> return $ hCons hdr (hCons (ARPInEthernet arpPacket) hNil)
-                   Nothing -> 
-                     do body <- Binary.getByteString r
-                        return $ hCons hdr (hCons (UninterpretedEthernetBody B.empty) hNil)  
-         else do body <- Binary.getByteString r
-                 return $ hCons hdr (hCons (UninterpretedEthernetBody B.empty) hNil)  
-
+  case typeCode hdr of
+    v | v == ethTypeIP -> do
+      ipPacket <- getIPPacket
+      return $ hCons hdr (hCons (IPInEthernet ipPacket) hNil)            
+    v | v == ethTypeARP -> do
+      mArpPacket <- getARPPacket
+      case mArpPacket of
+        Just arpPacket -> return $ 
+          hCons hdr (hCons (ARPInEthernet arpPacket) hNil)
+        Nothing -> error "cannot decode arp packet"
+    v | v == ethTypePaneDP -> do
+      switchID <- Strict.getWord64be
+      portID <- Strict.getWord16be
+      return (hCons hdr (hCons (PaneDPInEthernet switchID portID) hNil))
+    v | v == ethTypeIPv6 -> error "IPv6 traffic"
+    otherwise ->  error $ "unknown ethernet type code: " ++ show (typeCode hdr)
 
 -- | Parser for Ethernet headers.
 getEthHeader2 :: Binary.Get EthernetHeader
@@ -245,12 +227,15 @@ putEthHeader (Ethernet8021Q dstAddr srcAddr tcode pcp cfi vid) =
 
 
 putEthFrame :: EthernetFrame -> Strict.Put
-putEthFrame (HCons hdr (HCons body HNil)) = 
-  do putEthHeader hdr
-     case body of
-       IPInEthernet ipPacket -> error "put method not yet supported for IP packets"
-       ARPInEthernet arpPacket -> error "put method not yet supported for ARP packets"
-       UninterpretedEthernetBody bs -> Strict.putByteString bs
+putEthFrame (HCons hdr (HCons body HNil)) =  do
+  putEthHeader hdr
+  case body of
+    IPInEthernet ipPacket -> error "put method NYI for IP packets"
+    ARPInEthernet arpPacket -> error "put method NYI for ARP packets"
+    UninterpretedEthernetBody bs -> Strict.putByteString bs
+    PaneDPInEthernet switchID portID -> do
+      Strict.putWord64be switchID
+      Strict.putWord16be portID
 
 
 ethTypeIP, ethTypeARP, ethTypeLLDP, ethTypeVLAN, ethTypeIPv6, typeEth2Cutoff :: EthernetTypeCode
@@ -260,6 +245,9 @@ ethTypeLLDP         = 0x88CC
 ethTypeVLAN         = 0x8100
 ethTypeIPv6			= 0x86DD
 typeEth2Cutoff = 0x0600
+
+ethTypePaneDP :: EthernetTypeCode
+ethTypePaneDP = 0x0777
 
 
 clearBits :: Bits a => a -> [Int] -> a 
