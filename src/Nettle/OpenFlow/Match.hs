@@ -79,7 +79,7 @@ matchAny = Match { inPort           = Nothing,
 intersect :: Match -> Match -> Maybe Match
 intersect (Match inp seth deth vid vp etp tos pr sh dh sp dp)
           (Match inp' seth' deth' vid' vp' etp' tos' pr' sh' dh' sp' dp') = do
-  let inter lhs      Nothing  = Just lhs
+  let inter lhs      Nothing  = Just lhs -- Remember: "Nothing" is wildcard
       inter Nothing  rhs      = Just rhs
       inter (Just l) (Just r) 
         | l == r    = Just (Just l)
@@ -94,8 +94,8 @@ intersect (Match inp seth deth vid vp etp tos pr sh dh sp dp)
   ipProto <- inter pr pr'
   srcIP <- IPAddress.intersect sh sh'
   dstIP <- IPAddress.intersect dh dh'
-  srcPort <- inter sp sp'
-  dstPort <- inter dp dp'
+  srcPort <- inter sp sp' -- TODO(adf): Open vSwitch supports using IP
+  dstPort <- inter dp dp' -- address-like port ranges
   return (Match inPort srcEth dstEth vlanID vlanPrio ethTyp ipTOS ipProto
                 srcIP dstIP srcPort dstPort)
 
@@ -104,7 +104,7 @@ subset (Match inp seth deth vid vp etp tos pr sh dh sp dp)
        (Match inp' seth' deth' vid' vp' etp' tos' pr' sh' dh' sp' dp') =
   let inm (Just l) (Just r) = l == r
       inm Nothing  (Just _) = False
-      inm _        Nothing  = True
+      inm _        Nothing  = True -- Remember: "Nothing" is wildcard
       ip p1 p2 = IPAddress.isSubset p2 p1
     in inm inp inp' && inm seth seth' && inm deth deth' && inm vid vid' &&
        inm vp vp' && inm etp etp' && inm tos tos' && inm pr pr' && ip sh sh' &&
