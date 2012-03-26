@@ -12,9 +12,12 @@ import qualified Nettle.OpenFlow.StrictPut as Strict
 import qualified Data.Binary.Get as Binary
 
 
-newtype IPAddress    = IPAddress Word32 deriving (Read, Eq, Show, Ord)
+newtype IPAddress    = IPAddress Word32 deriving (Read, Eq, Ord)
 type IPAddressPrefix = (IPAddress, PrefixLength)
 type PrefixLength    = Word8
+
+instance Show IPAddress where
+  show ip = showOctets ip
 
 ipAddressToWord32 :: IPAddress -> Word32
 ipAddressToWord32 (IPAddress a) = a

@@ -29,11 +29,17 @@ import Data.Generics
 import qualified Data.Binary.Get as Binary
 import GHC.Base
 import GHC.Word
-
+import Numeric (showHex)
+import Data.List (intersperse)
 
 -- | An Ethernet address consists of 6 bytes. It is stored in a single 64-bit value.
 newtype EthernetAddress = EthernetAddress Word64 
-                        deriving (Show,Read,Eq,Ord, Data, Typeable)
+                        deriving (Read,Eq,Ord, Data, Typeable)
+
+instance Show EthernetAddress where
+  show eth = concat $ intersperse ":" (map (\n -> showHex n "") 
+                                      [w0,w1,w2,w3,w4,w5])
+               where (w0,w1,w2,w3,w4,w5) = unpack eth
                                 
 -- | Builds an ethernet address from a Word64 value. 
 -- The two most significant bytes are irrelevant; only the bottom 6 bytes are used.
