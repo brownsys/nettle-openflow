@@ -3,6 +3,7 @@
 module Nettle.OpenFlow.Switch ( 
   SwitchFeatures (..)
   , SwitchID
+  , showSwID
   , SwitchCapability (..)
   , maxNumberPorts
   , QueueConfigRequest (..)
@@ -16,6 +17,7 @@ module Nettle.OpenFlow.Switch (
 import Data.Word
 import Nettle.OpenFlow.Port
 import Nettle.OpenFlow.Action
+import Numeric (showHex)
 
 -- |The switch features record, summarizes information about a switch
 data SwitchFeatures 
@@ -30,6 +32,9 @@ data SwitchFeatures
 
 -- |A unique identifier for a switch, also known as DataPathID.
 type SwitchID = Word64
+
+showSwID sid =
+  "0x" ++ showHex sid ""
 
 -- | Maximum number of ports on a switch
 maxNumberPorts :: PortID

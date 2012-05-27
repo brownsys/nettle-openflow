@@ -46,6 +46,7 @@ import qualified Data.ByteString.Internal as S
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Text.Printf
+import Numeric (showHex)
 
 
 type ServerPortNumber = Word16
@@ -229,7 +230,7 @@ sendToSwitchWithID :: OpenFlowServer -> SwitchID -> (TransactionID, CSMessage) -
 sendToSwitchWithID (OpenFlowServer (_,shmr)) sid msg 
   = do switchHandleMap <- readIORef shmr 
        case Map.lookup sid switchHandleMap of
-         Nothing -> printf "Tried to send message to switch: %d, but it is no longer connected.\nMessage was %s.\n" sid (show msg)
+         Nothing -> printf "Tried to send message to switch: %s, but it is no longer connected.\nMessage was %s.\n" (showSwID sid) (show msg)
          Just sh -> sendToSwitch sh msg --this could fail.
 {-# INLINE sendToSwitchWithID #-}                                        
      
