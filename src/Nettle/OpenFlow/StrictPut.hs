@@ -46,7 +46,7 @@ runPut ptr (PutM f) =
 -- The first argument is an upper bound on the size of the array needed to do the serialization.
 runPutToByteString :: Int -> Put -> S.ByteString
 runPutToByteString maxSize put = 
-  unsafePerformIO (S.createAndTrim maxSize (\ptr -> runPut ptr put))
+  unsafeDupablePerformIO (S.createAndTrim maxSize (\ptr -> runPut ptr put))
   
 instance Monad PutM where
   return x = PutM (\ptr -> return (x, ptr))
