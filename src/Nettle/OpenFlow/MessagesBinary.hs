@@ -1661,6 +1661,7 @@ statsRequestSize (PortStatsRequest)       = headerSize + 2 + 2
 #if OPENFLOW_VERSION==1
 statsRequestSize (PortStatsRequest _)     = headerSize + 2 + 2 + 2 + 6
 #endif
+statsRequestSize (DescriptionRequest) = headerSize + 2 + 2
 
 
 putStatsRequest :: StatsRequest -> Put 
