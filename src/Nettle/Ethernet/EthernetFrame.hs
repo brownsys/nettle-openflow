@@ -15,6 +15,7 @@ module Nettle.Ethernet.EthernetFrame (
   , ethTypeARP
   , ethTypeLLDP
   , ethTypeIPv6
+  , ethType8021X
   , ethTypePaneDP
   , typeEth2Cutoff
   , VLANPriority
@@ -172,6 +173,7 @@ getEthernetFrame = do
       portID <- Strict.getWord16be
       return (hCons hdr (hCons (PaneDPInEthernet switchID portID) hNil))
     v | v == ethTypeIPv6 -> error "IPv6 traffic"
+    v | v == ethType8021X -> error "802.1X traffic"
     otherwise ->  error $ "unknown ethernet type code: " ++ show (typeCode hdr)
 
 -- | Parser for Ethernet headers.
@@ -238,12 +240,14 @@ putEthFrame (HCons hdr (HCons body HNil)) =  do
       Strict.putWord16be portID
 
 
-ethTypeIP, ethTypeARP, ethTypeLLDP, ethTypeVLAN, ethTypeIPv6, typeEth2Cutoff :: EthernetTypeCode
+-- Best source for list: https://en.wikipedia.org/wiki/EtherType
+ethTypeIP, ethTypeARP, ethTypeLLDP, ethTypeVLAN, ethTypeIPv6, ethType8021X, typeEth2Cutoff :: EthernetTypeCode
 ethTypeIP           = 0x0800
 ethTypeARP          = 0x0806
 ethTypeLLDP         = 0x88CC
 ethTypeVLAN         = 0x8100
 ethTypeIPv6			= 0x86DD
+ethType8021X        = 0x888E
 typeEth2Cutoff = 0x0600
 
 ethTypePaneDP :: EthernetTypeCode
