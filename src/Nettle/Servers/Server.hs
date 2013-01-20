@@ -50,7 +50,6 @@ import Numeric (showHex)
 
 
 type ServerPortNumber = Word16
-deriving instance Ord SockAddr
 
 -- | Abstract type containing the state of the OpenFlow server.
 newtype OpenFlowServer = OpenFlowServer (Socket, IORef (Map SwitchID SwitchHandle))

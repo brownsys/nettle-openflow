@@ -57,7 +57,7 @@ Library
     , binary-strict
     , mtl
     , parsec >= 3.1
-    , network >= 2.3
+    , network >= 2.4
     , containers
     , bimap 
     , HList
