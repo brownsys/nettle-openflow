@@ -167,24 +167,37 @@ splitChunks sh buffer = go buffer []
                else return ({-# SCC "splitChunks4" #-} reverse chunks, buffer)
       where headerSize = 8 
             
+
+-- | Loops recv until exactly the number of bytes have been received, or the
+-- connection is closed.
+recvExactly :: Socket -> Int -> IO S.ByteString
+recvExactly skt nbytes = do
+    buf <- recv skt nbytes
+    if (nbytes /= S.length buf)
+      then if S.length buf == 0
+           then return buf
+           else do tmp <- recvExactly skt (nbytes - S.length buf)
+                   return (S.append buf tmp)
+      else return buf
+
             
 -- | Blocks until a message is received from the switch or the connection is closed.
 -- Returns `Nothing` only if the connection is closed.
 receiveFromSwitch :: SwitchHandle -> IO (Maybe (TransactionID, SCMessage))
 receiveFromSwitch sh@(SwitchHandle (clientAddr, s, _, _, _, _)) 
-  = do hdrbs <- recv s headerSize 
+  = do hdrbs <- recvExactly s headerSize
        if (headerSize /= S.length hdrbs) 
          then if S.length hdrbs == 0 
-              then return Nothing 
-              else error "error reading header"
+              then return Nothing  -- connection closed appropriately
+              else error "error reading header: connection closed unexpectedly"
          else 
            case fst (runGet getHeader hdrbs) of
              Left err     -> error err
              Right header -> 
                do let expectedBodyLen = fromIntegral (msgLength header) - headerSize
                   bodybs <- if expectedBodyLen > 0 
-                            then do bodybs <- recv s expectedBodyLen 
-                                    when (expectedBodyLen /= S.length bodybs) (error "error reading body")
+                            then do bodybs <- recvExactly s expectedBodyLen
+                                    when (expectedBodyLen /= S.length bodybs) (error "error reading body: connection closed unexpectedly")
                                     return bodybs
                             else return S.empty
                   case fst (runGet (getSCMessageBody header) bodybs ) of
