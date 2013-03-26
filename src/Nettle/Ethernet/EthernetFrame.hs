@@ -172,8 +172,12 @@ getEthernetFrame = do
       switchID <- Strict.getWord64be
       portID <- Strict.getWord16be
       return (hCons hdr (hCons (PaneDPInEthernet switchID portID) hNil))
-    v | v == ethTypeIPv6 -> error "IPv6 traffic"
-    v | v == ethType8021X -> error "802.1X traffic"
+    v | v == ethTypeIPv6 -> do
+      bs <- Strict.getByteString ipv6HeaderLen -- let's pretend options don't exist...
+      return (hCons hdr (hCons (UninterpretedEthernetBody bs) hNil))
+    v | v == ethType8021X -> do
+      bs <- Strict.getByteString eth8021xHeaderLen -- let's ignore the body for now...
+      return (hCons hdr (hCons (UninterpretedEthernetBody bs) hNil))
     otherwise ->  error $ "unknown ethernet type code: " ++ show (typeCode hdr)
 
 -- | Parser for Ethernet headers.
@@ -253,6 +257,8 @@ typeEth2Cutoff = 0x0600
 ethTypePaneDP :: EthernetTypeCode
 ethTypePaneDP = 0x0777
 
+ipv6HeaderLen = 40
+eth8021xHeaderLen = 4
 
 clearBits :: Bits a => a -> [Int] -> a 
 clearBits = foldl clearBit
