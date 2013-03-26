@@ -102,16 +102,19 @@ acceptSwitch ofps@(OpenFlowServer (s,shmr)) =
       = do sendToSwitch switch (0, CSHello)
            m <- receiveFromSwitch switch
            case m of 
-             Nothing -> error ("switch broke connection")
+             Nothing -> do sClose $ switchSocket switch
+                           error ("switch broke connection")
              Just (xid, msg) -> 
                case msg of 
                  SCHello -> go2 switch
-                 _       -> error ("received unexpected message during handshake: " ++ show (xid, msg))
+                 _       -> do sClose $ switchSocket switch
+                               error ("received unexpected message during handshake: " ++ show (xid, msg))
     go2 switch = go2'
       where go2' = do sendToSwitch switch (0, FeaturesRequest)
                       m <- receiveFromSwitch switch
                       case m of 
-                        Nothing -> error "switch broke connection during handshake"
+                        Nothing -> do sClose $ switchSocket switch
+                                      error "switch broke connection during handshake"
                         Just (xid, msg) -> 
                           case msg of 
                             Features (sfr@(SwitchFeatures { switchID })) ->
@@ -130,6 +133,10 @@ acceptSwitch ofps@(OpenFlowServer (s,shmr)) =
 -- | Returns the socket address of the switch connection. 
 switchSockAddr :: SwitchHandle -> SockAddr
 switchSockAddr (SwitchHandle (a,_,_,_,_,_)) = a
+
+-- | Returns the socket of the switch connection.
+switchSocket :: SwitchHandle -> Socket
+switchSocket (SwitchHandle (_,s,_,_,_,_)) = s
 
 receiveBatch :: SwitchHandle -> IO [(TransactionID, SCMessage)]
 receiveBatch sh@(SwitchHandle (_, s, _, inBufferRef,_,_)) = 
