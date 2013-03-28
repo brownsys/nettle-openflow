@@ -311,15 +311,22 @@ getQueueConfigReply len =
           do propType <- getWord16be
              propLen  <- getWord16be 
              skip 4
-             when (propType /= ofpqtMinRate) (error ("Unexpected queue property type code " ++ show propType))
              rate <- getWord16be
              skip 6
              let rate' = if rate  > 1000 then Disabled else Enabled rate
-             return (MinRateQueue rate', propLen)
-                          
-                          
+             let prop
+                   | propType == ofpqtMinRate = MinRateQueue rate'
+                   | propType == ofpqtMaxRate = MaxRateQueue rate'
+                   | otherwise                = error ("Unexpected queue property type code " ++ show propType)
+             return (prop, propLen)
+
+
 ofpqtMinRate :: Word16                          
 ofpqtMinRate = 1
+
+ofpqtMaxRate :: Word16 -- Indigo switches support max rate this way
+ofpqtMaxRate = 2
+
 ----------------------
 -- Set Config parser
 ----------------------
@@ -1898,10 +1905,14 @@ match2OFPMatch (Match {..})
     nullEthAddr       = ethernetAddress 0 0 0 0 0 0
 
 lenQueueProp (MinRateQueue _) = 16
+lenQueueProp (MaxRateQueue _) = 16
+
+putQueueProp (MinRateQueue (Enabled rate)) = putQueueProp' ofpqtMinRate rate
+putQueueProp (MaxRateQueue (Enabled rate)) = putQueueProp' ofpqtMaxRate rate
 
 -- struct ofp_queue_prop_min_rate
-putQueueProp (MinRateQueue (Enabled rate)) = do
-  putWord16be 1 -- OFPQT_MIN_RATE
+putQueueProp' propType rate  = do
+  putWord16be propType
   putWord16be 16 -- length
   putWord32be 0 -- padding
   putWord16be rate

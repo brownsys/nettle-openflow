@@ -65,6 +65,7 @@ data QueueConfig = QueueConfig QueueID [QueueProperty]
 type QueueLength = Word16
 
 data QueueProperty = MinRateQueue QueueRate 
+                   | MaxRateQueue QueueRate
                    deriving (Show,Read,Eq)
 data QueueRate = Disabled | Enabled Word16
                deriving (Show, Read, Eq)
