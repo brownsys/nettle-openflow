@@ -67,5 +67,10 @@ type QueueLength = Word16
 data QueueProperty = MinRateQueue QueueRate 
                    | MaxRateQueue QueueRate
                    deriving (Show,Read,Eq)
+
 data QueueRate = Disabled | Enabled Word16
                deriving (Show, Read, Eq)
+instance Ord QueueRate where
+  Disabled <= (Enabled _) = False
+  (Enabled m) <= (Enabled n) = m <= n
+  _ <= Disabled = True
