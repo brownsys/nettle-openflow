@@ -680,8 +680,8 @@ code2ErrorType typ code bytes
     | typ == 1 = BadRequest    (requestErrorCodeMap ! code) bytes
     | typ == 2 = BadAction     (actionErrorCodeMap  ! code) bytes
     | typ == 3 = FlowModFailed (flowModErrorCodeMap ! code) bytes
-    | typ == 4 = error "Port mod failed error not yet handled"
-    | typ == 5 = error "Queue op failed error not yet handled"                 
+    | typ == 4 = PortModFailed (portModErrorCodeMap ! code) bytes
+    | typ == 5 = QueueOperationFailed (queueOpErrorCodeMap ! code) bytes
 #endif
 
 
@@ -733,6 +733,15 @@ flowModErrorCodeMap = Bimap.fromList [ (0,   TablesFull)
                                        , (5,       UnsupportedActionList) 
 #endif                                         
                                        ]
+
+portModErrorCodeMap = Bimap.fromList [ (0, BadPort)
+                                     , (1, BadHardwareAddress)
+                                     ]
+
+queueOpErrorCodeMap = Bimap.fromList [ (0, QueueOpBadPort)
+                                     , (1, QueueDoesNotExist)
+                                     , (2, QueueOpPermissionsError)
+                                     ]
 
 
 ------------------------------------------
