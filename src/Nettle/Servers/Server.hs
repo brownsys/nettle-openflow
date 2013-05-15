@@ -20,6 +20,7 @@ module Nettle.Servers.Server
       , SwitchHandle
       , handle2SwitchID
       , switchSockAddr
+      , switchSocket
       , receiveFromSwitch
       , receiveBatch
       , sendToSwitch
